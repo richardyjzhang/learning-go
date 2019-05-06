@@ -4,6 +4,8 @@ import (
 	"testing"
 )
 
+var tempVid string
+
 func clearTables() {
 	dbConn.Exec("TRUNCATE users")
 	dbConn.Exec("TRUNCATE video_info")
@@ -52,5 +54,47 @@ func testRegetUser(t *testing.T) {
 	}
 	if pwd != "" {
 		t.Errorf("Error: DelUser Failed")
+	}
+}
+
+func TestVideoWorkFlow(t *testing.T) {
+	clearTables()
+	t.Run("PrepareUser", testAddUser)
+	t.Run("AddVideo", testAddVideoInfo)
+	t.Run("GetVideo", testGetVideoInfo)
+	t.Run("DelVideo", testDelVideoInfo)
+	t.Run("RegetVideo", testRegetVideoInfo)
+}
+
+func testAddVideoInfo(t *testing.T) {
+	res, err := AddNewVideo(1, "AV")
+	if err != nil {
+		t.Errorf("Error of AddVideoInfo: %v", err)
+	}
+
+	tempVid = res.ID
+}
+
+func testGetVideoInfo(t *testing.T) {
+	_, err := GetVideoInfo(tempVid)
+	if err != nil {
+		t.Errorf("Error of GetVideoInfo")
+	}
+}
+
+func testDelVideoInfo(t *testing.T) {
+	err := DeleteVideoInfo(tempVid)
+	if err != nil {
+		t.Errorf("Error of DelVideoInfo: %v", err)
+	}
+}
+
+func testRegetVideoInfo(t *testing.T) {
+	res, err := GetVideoInfo(tempVid)
+	if err != nil {
+		t.Errorf("Error of RegetVideoInfo: %v", err)
+	}
+	if res != nil {
+		t.Errorf("Error: DelVideoInfo Failed")
 	}
 }
