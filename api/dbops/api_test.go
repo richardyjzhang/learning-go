@@ -1,7 +1,9 @@
 package dbops
 
 import (
+	"strconv"
 	"testing"
+	"time"
 )
 
 var tempVid string
@@ -95,6 +97,37 @@ func testRegetVideoInfo(t *testing.T) {
 		t.Errorf("Error of RegetVideoInfo: %v", err)
 	}
 	if res != nil {
-		t.Errorf("Error: DelVideoInfo Failed")
+		t.Errorf("Error of DelVideoInfo Failed")
+	}
+}
+
+func TestCommentWorkFlow(t *testing.T) {
+	clearTables()
+	t.Run("PrepareUser", testAddUser)
+	t.Run("AddComment", testAddComment)
+	t.Run("ListComments", testListComments)
+}
+
+func testAddComment(t *testing.T) {
+	vid := "AV"
+	aid := 1
+	content := "I like this AV"
+
+	err := AddNewComment(vid, aid, content)
+
+	if err != nil {
+		t.Errorf("Error of Add Comment: %s", err)
+	}
+}
+
+func testListComments(t *testing.T) {
+	vid := "AV"
+	from := 0
+	to, _ := strconv.Atoi(strconv.FormatInt(
+		time.Now().UnixNano()/1e9, 10))
+	_, err := ListComments(vid, from, to)
+
+	if err != nil {
+		t.Errorf("Error of List Comment: %s", err)
 	}
 }

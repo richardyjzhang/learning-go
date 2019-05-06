@@ -129,3 +129,59 @@ func DeleteVideoInfo(vid string) error {
 
 	return nil
 }
+
+func AddNewComment(vid string, aid int, content string) error {
+	id, err := utils.NewUUID()
+	if err != nil {
+		return err
+	}
+
+	stmt, err := dbConn.Prepare(`INSERT INTO comments 
+		(id, video_id, author_id, content) VALUES (?, ?, ?, ?)`)
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(id, vid, aid, content)
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+	return nil
+}
+
+func ListComments(vid string, from, to int) ([]*defs.Comment, error) {
+	stmt, err := dbConn.Prepare(`
+		SELECT comments.id, users.login_name, comments.content
+		FROM comments 
+		INNER JOIN users ON comments.author_id = users.id
+		WHERE comments.video_id = ? 
+		AND comments.time > FROM_UNIXTIME(?)
+		AND comments.time <= FROM_UNIXTIME(?)`)
+
+	var res []*defs.Comment
+	if err != nil {
+		log.Printf("Error List Comments: %s", err)
+		return res, err
+	}
+
+	rows, err := stmt.Query(vid, from, to)
+	if err != nil {
+		return res, err
+	}
+
+	for rows.Next() {
+		var id, name, content string
+		if err := rows.Scan(&id, &name, &content); err != nil {
+			return res, err
+		}
+
+		c := &defs.Comment{ID: id, VideoID: vid, AuthorID: name, Content: content}
+		res = append(res, c)
+	}
+
+	defer stmt.Close()
+
+	return res, nil
+}
